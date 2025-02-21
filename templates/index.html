@@ -1,0 +1,505 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload UI</title>
+    <link href="favicon.ico" rel="icon" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .form-container {
+            width: 100vw;
+            height: 100vh;
+            background-color: #6adaff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .upload-files-container {
+            background-color: #f7fff7;
+            width: 420px;
+            padding: 30px 60px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            box-shadow: rgba(0, 0, 0, 0.24) 0px 10px 20px, rgba(0, 0, 0, 0.28) 0px 6px 6px;
+        }
+        .drag-file-area {
+            border: 2px dashed #6adaff;
+            border-radius: 40px;
+            margin: 10px 0 15px;
+            padding: 30px 70px;
+            width: 320px;
+            text-align: center;
+        }
+        .drag-file-area .upload-icon {
+            font-size: 50px;
+        }
+        .drag-file-area h3 {
+    font-size: 26px;
+    margin: 15px 0;
+    color: black;
+    font-weight: bold;
+}
+        .drag-file-area label {
+            font-size: 19px;
+        }
+        .drag-file-area label .browse-files-text {
+            color: #008ab8;
+            font-weight: bolder;
+            cursor: pointer;
+        }
+        .browse-files span {
+            position: relative;
+            top: -25px;
+        }
+        .default-file-input {
+            opacity: 0;
+        }
+        .cannot-upload-message {
+            background-color: #ffc6c4;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            padding: 5px 10px 5px 30px;
+            border-radius: 5px;
+            color: #BB0000;
+            display: none;
+        }
+        @keyframes fadeIn {
+          0% {opacity: 0;}
+          100% {opacity: 1;}
+        }
+        .cannot-upload-message span, .upload-button-icon {
+            padding-right: 10px;
+        }
+        .cannot-upload-message span:last-child {
+            padding-left: 20px;
+            cursor: pointer;
+        }
+        .file-block {
+            color: #f7fff7;
+            background-color: #008ab8;
+              transition: all 1s;
+            width: 390px;
+            position: relative;
+            display: none;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0 15px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+        .file-info {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+        }
+        .file-icon {
+            margin-right: 10px;
+        }
+        .file-name, .file-size {
+            padding: 0 3px;
+        }
+        .remove-file-icon {
+            cursor: pointer;
+        }
+        .progress-bar {
+            display: flex;
+            position: absolute;
+            bottom: 0;
+            left: 4.5%;
+            width: 0;
+            height: 5px;
+            border-radius: 25px;
+            background-color: #6adaff;
+        }
+        .upload-button {
+            font-family: 'Montserrat';
+            background-color: #008ab8 ;
+            color: #f7fff7;
+            display: none;
+            align-items: center;
+            font-size: 18px;
+            border: none;
+            border-radius: 20px;
+            margin: 10px;
+            padding: 7.5px 50px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <form class="form-container" enctype='multipart/form-data'>
+        <div class="upload-files-container">
+            <div class="drag-file-area">
+                <span class="material-icons-outlined upload-icon"> file_upload </span>
+                <h3 class="dynamic-message"> Drag & drop any file here </h3>
+                <label class="label"> or <span class="browse-files"> <input type="file" class="default-file-input" multiple /> <span class="browse-files-text">browse file</span> <span>from device</span> </span> </label>
+            </div>
+            <span class="cannot-upload-message"> <span class="material-icons-outlined">error</span> Please select a file first <span class="material-icons-outlined cancel-alert-button">cancel</span> </span>
+            <div class="file-block">
+                <div class="file-info"> <span class="material-icons-outlined file-icon">description</span> <span class="file-name"> </span> | <span class="file-size">  </span> </div>
+                <span class="material-icons remove-file-icon">delete</span>
+                <div class="progress-bar"> </div>
+            </div>
+            <button type="button" class="upload-button">Translate</button>
+        </div>
+    </form>
+    <script>
+        var isAdvancedUpload = function() {
+            var div = document.createElement('div');
+            return (('draggable' in div) || ('ondragstart' in div && 'ondrop' in div)) && 'FormData' in window && 'FileReader' in window;
+        }();
+
+        let draggableFileArea = document.querySelector(".drag-file-area");
+        let browseFileText = document.querySelector(".browse-files");
+        let uploadIcon = document.querySelector(".upload-icon");
+        let dragDropText = document.querySelector(".dynamic-message");
+        let fileInput = document.querySelector(".default-file-input");
+        let cannotUploadMessage = document.querySelector(".cannot-upload-message");
+        let cancelAlertButton = document.querySelector(".cancel-alert-button");
+        let uploadedFile = document.querySelector(".file-block");
+        let fileName = document.querySelector(".file-name");
+        let fileSize = document.querySelector(".file-size");
+        let progressBar = document.querySelector(".progress-bar");
+        let removeFileButton = document.querySelector(".remove-file-icon");
+        let uploadButton = document.querySelector(".upload-button");
+
+        fileInput.addEventListener("click", () => {
+            fileInput.value = '';
+        });
+
+        fileInput.addEventListener("change", e => {
+            uploadIcon.innerHTML = 'check_circle';
+            dragDropText.innerHTML = 'File Dropped Successfully!';
+            document.querySelector(".label").innerHTML = `drag & drop or <span class="browse-files"> <input type="file" class="default-file-input" style=""/> <span class="browse-files-text" style="top: 0;"> browse file</span></span>`;
+            fileName.innerHTML = fileInput.files[0].name;
+            fileSize.innerHTML = (fileInput.files[0].size/1024).toFixed(1) + " KB";
+            uploadedFile.style.cssText = "display: flex;";
+            progressBar.style.width = 0;
+            uploadButton.style.display = "flex";
+        });
+
+        uploadButton.addEventListener("click", () => {
+            let file = fileInput.files[0];
+            if (file) {
+                let formData = new FormData();
+                formData.append("file", file);
+
+                fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    } else {
+                        throw new Error("Ошибка загрузки файла");
+                    }
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.style.display = "none";
+                    a.href = url;
+                    a.download = file.name.replace(/\.[^/.]+$/, ".docx");
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    alert("Ошибка: " + error.message);
+                });
+            } else {
+                alert("Пожалуйста, выберите файл для перевода.");
+            }
+        });
+
+        cancelAlertButton.addEventListener("click", () => {
+            cannotUploadMessage.style.cssText = "display: none;";
+        });
+
+        if(isAdvancedUpload) {
+            ["drag", "dragstart", "dragend", "dragover", "dragenter", "dragleave", "drop"].forEach( evt => 
+                draggableFileArea.addEventListener(evt, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                })
+            );
+
+            ["dragover", "dragenter"].forEach( evt => {
+                draggableFileArea.addEventListener(evt, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadIcon.innerHTML = 'file_download';
+                    dragDropText.innerHTML = 'Drop your file here!';
+                });
+            });
+
+            draggableFileArea.addEventListener("drop", e => {
+                uploadIcon.innerHTML = 'check_circle';
+                dragDropText.innerHTML = 'File Dropped Successfully!';
+                document.querySelector(".label").innerHTML = `drag & drop or <span class="browse-files"> <input type="file" class="default-file-input" style=""/> <span class="browse-files-text" style="top: -23px; left: -20px;"> browse file</span> </span>`;
+
+                let files = e.dataTransfer.files;
+                fileInput.files = files;
+                fileName.innerHTML = files[0].name;
+                fileSize.innerHTML = (files[0].size/1024).toFixed(1) + " KB";
+                uploadedFile.style.cssText = "display: flex;";
+                progressBar.style.width = 0;
+                uploadButton.style.display = "flex";
+            });
+        }
+
+        removeFileButton.addEventListener("click", () => {
+            uploadedFile.style.cssText = "display: none;";
+            fileInput.value = '';
+            uploadIcon.innerHTML = 'file_upload';
+            dragDropText.innerHTML = 'Drag & drop any file here';
+            document.querySelector(".label").innerHTML = `or <span class="browse-files"> <input type="file" class="default-file-input"/> <span class="browse-files-text">browse file</span> <span>from device</span> </span>`;
+            uploadButton.style.display = "none";
+        });
+    </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload UI</title>
+    <link href="favicon.ico" rel="icon" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .form-container {
+            width: 100vw;
+            height: 100vh;
+            background-color: #6adaff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .upload-files-container {
+            background-color: #f7fff7;
+            width: 420px;
+            padding: 30px 60px;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            box-shadow: rgba(0, 0, 0, 0.24) 0px 10px 20px, rgba(0, 0, 0, 0.28) 0px 6px 6px;
+        }
+        .drag-file-area {
+            border: 2px dashed #6adaff;
+            border-radius: 40px;
+            margin: 10px 0 15px;
+            padding: 30px 70px;
+            width: 320px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .drag-file-area .upload-icon {
+            font-size: 50px;
+        }
+        .drag-file-area h3 {
+            font-size: 26px;
+            margin: 15px 0;
+            color: black;
+            font-weight: bold;
+        }
+        .drag-file-area label {
+            font-size: 19px;
+            display: block;
+            margin-top: 10px;
+        }
+        .drag-file-area label .browse-files-text {
+            color: #008ab8;
+            font-weight: bolder;
+            cursor: pointer;
+        }
+        .default-file-input {
+            display: none;
+        }
+        .file-name-display {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0;
+            display: none;
+        }
+        .upload-button {
+            font-family: 'Montserrat';
+            background-color: #008ab8 ;
+            color: #f7fff7;
+            display: none;
+            align-items: center;
+            font-size: 18px;
+            border: none;
+            border-radius: 20px;
+            margin: 10px;
+            padding: 7.5px 50px;
+            cursor: pointer;
+        }
+        .loading-container {
+            text-align: center;
+            font-size: 20px;
+            display: none;
+            margin-top: 20px;
+        }
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid #008ab8;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .result-container {
+            display: none;
+            text-align: center;
+        }
+        .result-container .upload-button {
+            margin: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <form class="form-container">
+        <div class="upload-files-container" id="upload-container">
+            <div class="drag-file-area" id="drop-zone">
+                <span class="material-icons-outlined upload-icon"> file_upload </span>
+                <h3 class="dynamic-message"> Drag & drop any file here </h3>
+                <label class="label">or <span class="browse-files">
+                    <input type="file" class="default-file-input" id="fileInput"/>
+                    <span class="browse-files-text">browse file</span> from device
+                </span></label>
+            </div>
+            <p class="file-name-display" id="fileNameDisplay"></p> 
+            <button type="button" class="upload-button" id="translateButton">Translate</button>
+        </div>
+
+        <div class="upload-files-container loading-container" id="loading-container">
+            <p>Processing... Please wait</p>
+            <div class="spinner"></div>
+        </div>
+
+        <div class="upload-files-container result-container" id="result-container">
+            <h2>Translation Complete</h2>
+            <p>Your translated document is ready.</p>
+            <a class="upload-button" id="downloadButton">Download</a>
+            <button class="upload-button" id="backButton">Back</button>
+        </div>
+    </form>
+
+    <script>
+        let fileInput = document.getElementById("fileInput");
+        let fileNameDisplay = document.getElementById("fileNameDisplay");
+        let translateButton = document.getElementById("translateButton");
+        let uploadContainer = document.getElementById("upload-container");
+        let loadingContainer = document.getElementById("loading-container");
+        let resultContainer = document.getElementById("result-container");
+        let downloadButton = document.getElementById("downloadButton");
+        let backButton = document.getElementById("backButton");
+        let dropZone = document.getElementById("drop-zone");
+
+        fileInput.addEventListener("change", () => {
+            let file = fileInput.files[0];
+            if (file) {
+                fileNameDisplay.textContent = `Selected file: ${file.name}`;
+                fileNameDisplay.style.display = "block";
+                translateButton.style.display = "block";
+            }
+        });
+
+        dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = "#005f7a";
+        });
+
+        dropZone.addEventListener("dragleave", () => {
+            dropZone.style.borderColor = "#6adaff";
+        });
+
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = "#6adaff";
+
+            let files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event("change"));
+            }
+        });
+
+        translateButton.addEventListener("click", () => {
+            let file = fileInput.files[0];
+            if (!file) {
+                alert("Please select a file first!");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("file", file);
+
+            uploadContainer.style.display = "none";
+            loadingContainer.style.display = "block";
+
+            setTimeout(() => {
+                fetch("/upload", { method: "POST", body: formData })
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    downloadButton.href = url;
+                    downloadButton.download = file.name.replace(/\.[^/.]+$/, ".docx");
+
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = file.name.replace(/\.[^/.]+$/, ".docx");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    loadingContainer.style.display = "none";
+                    resultContainer.style.display = "block";
+                })
+                .catch(error => {
+                    alert("Error: " + error.message);
+                    uploadContainer.style.display = "block";
+                    loadingContainer.style.display = "none";
+                });
+            }, 1000);
+        });
+
+        backButton.addEventListener("click", () => {
+            location.reload();
+        });
+    </script>
+</body>
+</html>
