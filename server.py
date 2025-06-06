@@ -39,7 +39,12 @@ TRANSLATORS = {
 COUNTRY_KEYWORDS = {
     "uzbekistan": ["Republic of Uzbekistan", "O'zbekiston Respublikasi"],
     "india": ["Republic of India", "भारत गणराज्य"],
-    "usa": ["Republic of USA", "USA", "The United States of America", "America"],
+    "usa": [
+        "United States of America",
+        "USA",
+        "The United States of America",
+        "America",
+    ],
     "kazakhstan": ["KAZ", "Republic of Kazakhstan", "ҚАЗАҚСТАН"],
     "china": ["REPUBLIC OF CHINA", "CHN", "China"],
 }
